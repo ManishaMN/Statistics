@@ -1,0 +1,122 @@
+---
+title: "1_1"
+output:
+  html_document: default
+  pdf_document: default
+date: "2023-07-12"
+other: " using ames data set: bar,hist,summary func,count,kernel,histdensity,QQplot,boxplots"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r packages}
+options(repos = "https://cran.rstudio.com")
+install.packages('AmesHousing')
+install.packages('tidyverse')
+library(AmesHousing)
+library(tidyverse)
+install.packages("Hmisc")
+library(Hmisc)
+```
+```{r}
+install.packages('tinytex')
+tinytex::install_tinytex(force = TRUE)
+```
+
+## formatted ames dataset
+
+```{r}
+ames <- make_ordinal_ames() 
+#str(ames)
+```
+## ggplot bargraphh - nominal
+```{r, echo=FALSE}
+ggplot(data = ames) +
+  geom_bar(mapping = aes(x = Heating_QC), fill = "Orange") + labs(x = "Heating System Quality", y ="Frequency", title ="Bar Graph of Heating System")
+```
+## count - nominal
+```{r}
+ames %>%
+  count(Heating_QC)
+```
+## ggplot histogram interval estimate
+
+```{r}
+ggplot(data = ames) +
+  geom_histogram( mapping = aes(x = Sale_Price/1000), fill = "Blue") + labs(x ="Sales Price (Thousands $)", title ="Histogram of Sales Price in Thousands of Dollars", y ="Frequency")
+```
+
+## summary functions in R
+```{r first}
+summary(ames$Sale_Price)
+```
+
+
+```{r second(Himsc)}
+
+Hmisc::describe(ames$Sale_Price)
+```
+```{r  third ( tidyverse)}
+library(tidyverse)
+ames %>% 
+  group_by(Exter_Qual) %>%
+  dplyr::summarise( average = mean(Sale_Price), st_dev = sd(Sale_Price), maximum = max(Sale_Price), minimum = min(Sale_Price))
+
+```
+##histogram & kernal density estimator ( provide x in ggplot function***, ..density.. in y)
+```{r, echo = FALSE}
+library(ggplot2)
+ggplot(data = ames, aes(x=Sale_Price/1000)) + 
+  geom_histogram(aes( y=..density..), alpha=0.5) + geom_density( alpha = 0.2) +
+    labs(x = "Sales Price (Thousands $)")  
+
+```
+## 2 dist of sales one for each central air
+```{r}
+ggplot(data = ames, aes(x=Sale_Price/1000)) +
+  geom_histogram(data = subset(ames, Central_Air == 'Y'), aes(fill = Central_Air), alpha = 0.2) +
+  geom_histogram(data = subset(ames, Central_Air == 'N'), aes(fill = Central_Air), alpha = 0.2) +
+  labs(x = "Sales Price (Thousands $)")  + scale_fill_manual(name="Central_Air",values=c("red","blue"),labels=c("No","Yes"))
+```
+
+## normalize that quantity and compare the raw probability densitites
+```{r}
+ggplot(ames,aes(x=Sale_Price/1000)) + 
+    geom_histogram(data=subset(ames,Central_Air == 'Y'),aes(y=..density..,fill=Central_Air), alpha = 0.2) +
+    geom_histogram(data=subset(ames,Central_Air == 'N'),aes(y=..density..,fill=Central_Air), alpha = 0.2) +
+    labs(x = "Sales Price (Thousands $)") 
+```
+## to ease our effort in differentiating histogram, we can use kernel ( better way than histogram with density****)
+```{r}
+
+ggplot(ames,aes(x=Sale_Price/1000)) + 
+    geom_density(data=subset(ames,Central_Air == 'Y'),aes(fill=Central_Air), alpha = 0.2) +
+    geom_density(data=subset(ames,Central_Air == 'N'),aes(fill=Central_Air), alpha = 0.2) +
+    labs(x = "Sales Price (Thousands $)")  
+```
+
+## normal probability or QQ plots
+```{r}
+ggplot(data = ames, aes(sample = Sale_Price/1000)) +
+  stat_qq() +
+  stat_qq_line()
+```
+##box plot
+```{r}
+  ggplot(data = ames, aes(y = Sale_Price/1000))+
+  geom_boxplot()+
+  labs(y = "sales price")
+```
+
+##box plot to diff levels of categorical variable
+```{r}
+ggplot(data = ames, aes(y = Sale_Price/1000,x = Central_Air, fill = Central_Air))+
+  geom_boxplot()+
+  labs(y = "sales price",x = "Central Air")+
+  scale_fill_brewer(palette="Accent") + theme_classic() + coord_flip()
+```
+

@@ -1,0 +1,91 @@
+---
+title: "1_2(CI, HypoTest,one sample t test, 2 sample t test( normality(shapiro wilko), equal variance), Mann whitneywilcoxn)"
+output: html_document
+date: "2023-07-12"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+### Confidence Interval
+
+```{r ames}
+library(AmesHousing)
+ames <- make_ordinal_ames() 
+t.test(ames$Sale_Price, conf.level = 0.95)
+#pulling out C.I
+t.test(ames$Sale_Price, conf.level = 0.95)$conf.int
+```
+
+### To learn the labels of the various pieces of output, you can list them with the ls() function, or by saving the output as an object (below, results is the object that stores the output) and exploring it in your environment (upper right panel in RStudio)
+
+```{r above }
+ls(t.test(ames$Sale_Price, conf.level = 0.95))
+x <- t.test(ames$Sale_Price, conf.level = 0.95)
+```
+
+### Hypothesis testing (example), T no.of simulated experiments, n each exp tosses
+```{r}
+T=10000
+n=100
+set.seed(11)
+number_heads = vector()
+for(i in 1:T){
+outcomes = sample(c('Heads','Tails'), n, replace=T)
+number_heads[i] = sum(outcomes=="Heads")
+}
+
+df = data.frame(number_heads)
+View(df)
+
+library(ggplot2)
+
+ggplot(data = df) +
+  geom_density(aes(x = number_heads)) + 
+  labs(x = "Number of heads in 100 tosses")
+
+summary(df$number_heads)
+```
+## One sample T test 
+### (p-value is greater than our alpha level of 0.05, we fail to reject the null hypothesis. We do not quite have sufficient evidence to say the mean is different from 178,000.)
+```{r}
+t.test(ames$Sale_Price, mu = 178000)
+
+```
+###  ttest with greater
+```{r}
+t.test(ames$Sale_Price, mu = 178000, alternative = 'greater')
+```
+
+## 2 sample t test, diff of means btw 2 groups
+
+####1_a.Testing normality( normality of sales for each value of central air*************)
+```{r}
+ggplot(data = ames, aes(sample = Sale_Price, color = Central_Air)) +
+     stat_qq() +
+     stat_qq_line()
+```
+####1_b.Testing normality( null is normality, as P value is lower its not normal)
+```{r}
+shapiro.test(ames$Sale_Price[ames$Central_Air=='Y'])
+shapiro.test(ames$Sale_Price[ames$Central_Air=='N'])
+```
+####2 Equality of variance( null is Var are equal, rejecting null so go for var.equal=FALSE in t test)
+```{r}
+var.test(Sale_Price ~ Central_Air, data = ames)
+```
+### t test - 2 sample( null is means are equal), Our final conclusion from the t-test is the rejection of the null hypothesis and the conclusion that houses with and without central air should be expected to sell for different prices.
+```{r}
+  t.test(Sale_Price ~ Central_Air, data = ames, var.equal = FALSE)
+```
+##Mann-Whitney-Wilcoxon Test( when not normal)
+### the distribution of Sale_Price was not precisely normal. The most principled way to proceed in this case would be with a non-parametric test :null the medians of the two groups are equal 
+#### we make the same conclusion with our non-parametric test. Houses with and without central air should be expected to sell for different prices.
+```{r}
+wilcox.test(Sale_Price ~ Central_Air, data = ames)
+```
+

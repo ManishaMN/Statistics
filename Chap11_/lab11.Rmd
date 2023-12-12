@@ -1,0 +1,87 @@
+---
+title: "Lab11"
+output: html_document
+date: "2023-07-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r dataset}
+library(AppliedPredictiveModeling)
+data(FuelEconomy)
+head(cars2010)
+```
+
+## converting to factors
+
+```{r explore}
+cars2010$NumCyl <- as.factor(cars2010$NumCyl)
+cars2010$Transmission <- as.factor(cars2010$Transmission)
+cars2010$AirAspirationMethod <- as.factor(cars2010$AirAspirationMethod)
+cars2010$NumGears <- as.factor(cars2010$NumGears)
+cars2010$TransLockup <- as.factor(cars2010$TransLockup)
+cars2010$TransCreeperGear <- as.factor(cars2010$TransCreeperGear)
+cars2010$DriveDesc <- as.factor(cars2010$DriveDesc)
+cars2010$IntakeValvePerCyl <- as.factor(cars2010$IntakeValvePerCyl)
+cars2010$ExhaustValvesPerCyl <- as.factor(cars2010$ExhaustValvesPerCyl)
+cars2010$CarlineClassDesc <- as.factor(cars2010$CarlineClassDesc)
+cars2010$VarValveTiming <- as.factor(cars2010$VarValveTiming)
+cars2010$VarValveLift <- as.factor(cars2010$VarValveLift)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+#lasso regression
+```{r}
+# Regularized Regression (LASSO)
+train_x <- model.matrix(FE ~ ., data = cars2010)[, -1]
+train_y <- cars2010$FE
+
+library(glmnet)
+cars2010_lasso <- glmnet(x = train_x,  y = train_y,  alpha = 1)
+
+plot(cars2010_lasso, xvar = "lambda")
+
+#plots are converging towards zero variables and zero 
+```
+
+
+#CV lasso to optimize
+
+```{r}
+cars2010_lasso_cv <- cv.glmnet(x = train_x,  y = train_y,  alpha = 1)
+plot(cars2010_lasso_cv)
+```
+
+
+#plotting lasso for mse
+```{r}
+plot(cars2010_lasso, xvar = "lambda")
+abline(v = log(cars2010_lasso_cv$lambda.1se), col = "red", lty = "dashed")
+abline(v = log(cars2010_lasso_cv$lambda.min), col = "black", lty = "dashed")
+```
+
+```{r}
+l <- coef(cars2010_lasso, s = c(cars2010_lasso_cv$lambda.min, cars2010_lasso_cv$lambda.1se))
+l
+
+
+```
+# all 13 varibales
+
+#variables at 1se( TransCreeperGear1,ExhaustValvesPerCyl, VarValveTiming - 3 extra )
+```{r}
+l <- coef(cars2010_lasso, s = c(cars2010_lasso_cv$lambda.1se))
+l[]
+```
+```{r}
+cars2010_lasso_cv$lambda.min
+cars2010_lasso_cv$lambda.1se
+```
+
+
